@@ -153,6 +153,18 @@ describe('zodGenerator schema', async () => {
       options: {},
     },
     {
+      name: 'NullableStringWithAnyOfLength',
+      path: 'NullableStringWithAnyOfLength',
+      input: '../../mocks/constCases.yaml',
+      options: {},
+    },
+    {
+      name: 'NullableIntegerWithAnyOfRange',
+      path: 'NullableIntegerWithAnyOfRange',
+      input: '../../mocks/constCases.yaml',
+      options: {},
+    },
+    {
       name: 'NullableStringUuid',
       path: 'NullableStringUuid',
       input: '../../mocks/constCases.yaml',

@@ -16,6 +16,18 @@ components:
       anyOf:
         - type: string
         - type: "null"
+    NullableStringWithAnyOfLength:
+      anyOf:
+        - type: string
+          minLength: 1
+          maxLength: 255
+        - type: "null"
+    NullableIntegerWithAnyOfRange:
+      anyOf:
+        - type: integer
+          minimum: 1
+          maximum: 255
+        - type: "null"
     NullableStringUuid:
       type:
         - string

@@ -302,6 +302,29 @@ export class SchemaGenerator<
     })
   }
 
+  #toComposedSchema(items: Schema[] | undefined): Schema | undefined {
+    if (!items?.length) {
+      return undefined
+    }
+
+    const cleanedItems = items.filter((item) => !isKeyword(item, schemaKeywords.schema))
+
+    const normalizedItems = cleanedItems.some((item) => isKeyword(item, schemaKeywords.null))
+      ? cleanedItems.filter((item) => !isKeyword(item, schemaKeywords.nullable))
+      : cleanedItems
+
+    const composedItems = normalizedItems.length ? normalizedItems : items
+
+    if (composedItems.length === 1) {
+      return composedItems[0]
+    }
+
+    return {
+      keyword: schemaKeywords.and,
+      args: composedItems,
+    }
+  }
+
   #getOptions(name: string | null): Partial<TOptions> {
     const { override = [] } = this.context
 
@@ -567,7 +590,14 @@ export class SchemaGenerator<
             }
           } else {
             // Regular ref - find by $ref value
-            arg = schema.args.find((item) => isKeyword(item, schemaKeywords.ref) && item.args.$ref === value)
+            arg = schema.args.find((item) => {
+              if (isKeyword(item, schemaKeywords.ref)) {
+                return item.args.$ref === value
+              }
+
+              const nestedRef = SchemaGenerator.find([item], schemaKeywords.ref)
+              return nestedRef?.args.$ref === value
+            })
           }
 
           // Skip discriminator mappings that don't have a corresponding schema in the oneOf/anyOf
@@ -750,14 +780,15 @@ export class SchemaGenerator<
           {
             keyword: schemaKeywords.union,
             args: items
-              .map(
-                (item) =>
+              .map((item) =>
+                this.#toComposedSchema(
                   this.parse({
                     schema: { ...schemaObject, type: item },
                     name,
                     parentName,
                     rootName,
-                  })[0],
+                  }),
+                ),
               )
               .filter(Boolean)
               .map((item) => (isKeyword(item, schemaKeywords.object) ? { ...item, args: { ...item.args, strict: true } } : item)),
@@ -810,8 +841,7 @@ export class SchemaGenerator<
         keyword: schemaKeywords.union,
         args: (schemaObject.oneOf || schemaObject.anyOf)!
           .map((item) => {
-            // first item, this is ref
-            return item && this.parse({ schema: item as SchemaObject, name, parentName, rootName })[0]
+            return item ? this.#toComposedSchema(this.parse({ schema: item as SchemaObject, name, parentName, rootName })) : undefined
           })
           .filter(Boolean),
       }

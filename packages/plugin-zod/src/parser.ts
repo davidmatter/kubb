@@ -544,7 +544,9 @@ export const parse = createParser<string, ParserOptions>({
 
       const items = sort(current.args)
         .filter((schema: Schema) => {
-          return ![schemaKeywords.optional, schemaKeywords.describe].includes(schema.keyword as typeof schemaKeywords.describe)
+          return ![schemaKeywords.optional, schemaKeywords.nullable, schemaKeywords.nullish, schemaKeywords.default, schemaKeywords.describe].includes(
+            schema.keyword as typeof schemaKeywords.describe,
+          )
         })
         .map((it: Schema, _index, siblings) => this.parse({ schema, parent: current, name, current: it, siblings }, options))
         .filter(Boolean)
